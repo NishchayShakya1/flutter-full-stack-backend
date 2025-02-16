@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import TweetModel from "../database/models/tweet.model";
 import { ITweetInterface } from "../database/interfaces/tweet.interface";
+import UserModel from "../database/models/user.model";
 
 export const getTweetRepo = async (
   tweetId: string
@@ -58,5 +59,29 @@ export const updateTweetRepo = async (
   } catch (error) {
     console.log(error);
     return false;
+  }
+};
+
+export const getAllTweetsRepo = async (): Promise<any[] | null> => {
+  try {
+    const allTweets = await TweetModel.find();
+
+    if (!allTweets || allTweets.length == 0) {
+      return null;
+    }
+
+    const tweetWithUserInfo = await Promise.all(
+      allTweets.map(async (tweet) => {
+        const admin = await UserModel.findOne({ uid: tweet.adminId });
+        if (!admin) {
+          return { tweet, admin: null };
+        }
+        return { tweet, admin };
+      })
+    );
+    return tweetWithUserInfo;
+  } catch (error) {
+    console.log(error);
+    return null;
   }
 };
